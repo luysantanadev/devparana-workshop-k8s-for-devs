@@ -1,91 +1,121 @@
 <script setup lang="ts">
-const { data: todos, refresh } = await useFetch('/api/todos')
+import { h, resolveComponent } from 'vue'
+import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 
-async function remove(id: number) {
-  if (!confirm('Delete this todo?')) return
-  await $fetch(`/api/todos/${id}`, { method: 'DELETE' })
-  await refresh()
-}
+definePageMeta({ title: 'Todos' })
+
+const UBadge = resolveComponent('UBadge')
+const UButton = resolveComponent('UButton')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
+
+const router = useRouter()
+const toast = useToast()
+
+const { data: todos, refresh, status } = await useFetch('/api/todos')
+
+type Todo = NonNullable<typeof todos.value>[number]
 
 function formatDate(value: string | null | undefined) {
   if (!value) return '—'
   return new Date(value).toLocaleString()
 }
+
+async function remove(id: number) {
+  await $fetch(`/api/todos/${id}`, { method: 'DELETE' })
+  await refresh()
+  toast.add({ title: 'Todo deleted', icon: 'i-lucide-circle-check', color: 'success' })
+}
+
+function getActions(row: Todo): DropdownMenuItem[][] {
+  return [
+    [
+      {
+        label: 'Edit',
+        icon: 'i-lucide-pencil',
+        onSelect: () => router.push(`/todos/${row.id}/edit`),
+      },
+    ],
+    [
+      {
+        label: 'Delete',
+        icon: 'i-lucide-trash',
+        color: 'error' as const,
+        onSelect: () => remove(row.id),
+      },
+    ],
+  ]
+}
+
+const columns: TableColumn<Todo>[] = [
+  { accessorKey: 'id', header: 'ID', meta: { class: { th: 'w-12' } } },
+  { accessorKey: 'name', header: 'Name' },
+  {
+    accessorKey: 'description',
+    header: 'Description',
+    cell: ({ row }) => row.getValue('description') ?? '—',
+  },
+  {
+    id: 'user',
+    header: 'User',
+    cell: ({ row }) => row.original.user.name,
+  },
+  {
+    id: 'category',
+    header: 'Category',
+    cell: ({ row }) => h(UBadge, { variant: 'subtle', color: 'primary' }, () => row.original.category.name),
+  },
+  {
+    accessorKey: 'createdAt',
+    header: 'Created',
+    cell: ({ row }) => formatDate(row.getValue('createdAt')),
+  },
+  {
+    accessorKey: 'finishedAt',
+    header: 'Finished',
+    cell: ({ row }) => {
+      const v = row.getValue<string | null>('finishedAt')
+      return v
+        ? h(UBadge, { variant: 'subtle', color: 'success' }, () => formatDate(v))
+        : h('span', { class: 'text-muted' }, '—')
+    },
+  },
+  {
+    id: 'actions',
+    meta: { class: { td: 'text-right' } },
+    cell: ({ row }) =>
+      h(UDropdownMenu, {
+        items: getActions(row.original),
+        content: { align: 'end' },
+        'aria-label': 'Actions',
+      }, () => h(UButton, {
+        icon: 'i-lucide-ellipsis-vertical',
+        color: 'neutral',
+        variant: 'ghost',
+        'aria-label': 'Actions',
+      })),
+  },
+]
 </script>
 
 <template>
-  <div>
-    <div class="header">
-      <h1>Todos</h1>
-      <NuxtLink to="/todos/new" class="btn-primary">New Todo</NuxtLink>
-    </div>
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar title="Todos">
+        <template #trailing>
+          <UButton
+            icon="i-lucide-plus"
+            label="New Todo"
+            to="/todos/new"
+          />
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-    <table v-if="todos?.length">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Description</th>
-          <th>User</th>
-          <th>Category</th>
-          <th>Created</th>
-          <th>Finished</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="todo in todos" :key="todo.id">
-          <td>{{ todo.id }}</td>
-          <td>{{ todo.name }}</td>
-          <td>{{ todo.description ?? '—' }}</td>
-          <td>{{ todo.user.name }}</td>
-          <td>{{ todo.category.name }}</td>
-          <td>{{ formatDate(todo.createdAt) }}</td>
-          <td>{{ formatDate(todo.finishedAt) }}</td>
-          <td class="actions">
-            <NuxtLink :to="`/todos/${todo.id}/edit`" class="btn-secondary">Edit</NuxtLink>
-            <button class="btn-danger" @click="remove(todo.id)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p v-else class="empty">No todos yet.</p>
-  </div>
+    <UTable
+      :data="todos ?? []"
+      :columns="columns"
+      :loading="status === 'pending'"
+      class="flex-1"
+    />
+  </UDashboardPanel>
 </template>
-
-<style scoped>
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-th {
-  font-weight: 600;
-  background: #f9fafb;
-}
-
-.actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.empty {
-  color: #6b7280;
-  text-align: center;
-  padding: 2rem;
-}
-</style>

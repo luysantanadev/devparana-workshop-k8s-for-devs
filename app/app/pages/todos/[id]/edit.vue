@@ -2,7 +2,10 @@
 const route = useRoute()
 const id = Number(route.params.id)
 const router = useRouter()
-const error = ref('')
+const toast = useToast()
+const errorMsg = ref('')
+
+definePageMeta({ title: 'Edit Todo' })
 
 const [{ data: todo }, { data: users }, { data: categories }] = await Promise.all([
   useFetch(`/api/todos/${id}`),
@@ -19,12 +22,15 @@ const form = reactive({
   name: todo.value?.name ?? '',
   description: todo.value?.description ?? '',
   finishedAt: toDatetimeLocal(todo.value?.finishedAt),
-  userId: String(todo.value?.userId ?? ''),
-  categoryId: String(todo.value?.categoryId ?? ''),
+  userId: todo.value?.userId ?? '' as string | number,
+  categoryId: todo.value?.categoryId ?? '' as string | number,
 })
 
+const userOptions = computed(() => (users.value ?? []).map(u => ({ label: u.name, value: u.id })))
+const categoryOptions = computed(() => (categories.value ?? []).map(c => ({ label: c.name, value: c.id })))
+
 async function submit() {
-  error.value = ''
+  errorMsg.value = ''
   try {
     await $fetch(`/api/todos/${id}`, {
       method: 'PUT',
@@ -36,96 +42,92 @@ async function submit() {
         categoryId: Number(form.categoryId),
       },
     })
+    toast.add({ title: 'Todo updated', icon: 'i-lucide-circle-check', color: 'success' })
     await router.push('/todos')
   } catch (err: any) {
-    error.value = err?.data?.statusMessage ?? 'An error occurred'
+    errorMsg.value = err?.data?.statusMessage ?? 'An error occurred'
   }
 }
 </script>
 
 <template>
-  <div class="form-wrapper">
-    <h1>Edit Todo #{{ id }}</h1>
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar :title="`Edit Todo #${id}`">
+        <template #leading>
+          <UButton
+            icon="i-lucide-arrow-left"
+            color="neutral"
+            variant="ghost"
+            to="/todos"
+          />
+        </template>
+      </UDashboardNavbar>
+    </template>
 
-    <form @submit.prevent="submit">
-      <label for="name">Name</label>
-      <input id="name" v-model="form.name" type="text" placeholder="Enter name" required />
+    <div class="p-6 max-w-xl">
+      <form class="space-y-5" @submit.prevent="submit">
+        <UFormField label="Name" required>
+          <UInput
+            v-model="form.name"
+            placeholder="Enter a todo name"
+            class="w-full"
+            required
+          />
+        </UFormField>
 
-      <label for="description">Description</label>
-      <textarea id="description" v-model="form.description" placeholder="Optional description" rows="3" />
+        <UFormField label="Description">
+          <UTextarea
+            v-model="form.description"
+            placeholder="Optional description"
+            :rows="3"
+            class="w-full"
+          />
+        </UFormField>
 
-      <label for="userId">Assigned to</label>
-      <select id="userId" v-model="form.userId" required>
-        <option value="" disabled>Select a user</option>
-        <option v-for="u in users" :key="u.id" :value="String(u.id)">{{ u.name }}</option>
-      </select>
+        <UFormField label="Assigned to" required>
+          <USelect
+            v-model="form.userId"
+            :items="userOptions"
+            value-key="value"
+            label-key="label"
+            placeholder="Select a user"
+            class="w-full"
+          />
+        </UFormField>
 
-      <label for="categoryId">Category</label>
-      <select id="categoryId" v-model="form.categoryId" required>
-        <option value="" disabled>Select a category</option>
-        <option v-for="c in categories" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
-      </select>
+        <UFormField label="Category" required>
+          <USelect
+            v-model="form.categoryId"
+            :items="categoryOptions"
+            value-key="value"
+            label-key="label"
+            placeholder="Select a category"
+            class="w-full"
+          />
+        </UFormField>
 
-      <label for="finishedAt">Finish date</label>
-      <input id="finishedAt" v-model="form.finishedAt" type="datetime-local" />
+        <UFormField label="Finish date">
+          <UInput
+            v-model="form.finishedAt"
+            type="datetime-local"
+            class="w-full"
+          />
+        </UFormField>
 
-      <p v-if="error" class="error">{{ error }}</p>
+        <UAlert
+          v-if="errorMsg"
+          color="error"
+          variant="soft"
+          :title="errorMsg"
+          icon="i-lucide-circle-x"
+        />
 
-      <div class="form-actions">
-        <NuxtLink to="/todos" class="btn-secondary">Cancel</NuxtLink>
-        <button type="submit" class="btn-primary">Save</button>
-      </div>
-    </form>
-  </div>
+        <div class="flex gap-3">
+          <UButton color="neutral" variant="outline" to="/todos">Cancel</UButton>
+          <UButton type="submit" icon="i-lucide-save">Save</UButton>
+        </div>
+      </form>
+    </div>
+  </UDashboardPanel>
 </template>
-
-<style scoped>
-.form-wrapper { max-width: 540px; }
-
-h1 { margin-bottom: 1.5rem; }
-
-label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 0.375rem;
-  margin-top: 1rem;
-}
-
-label:first-of-type { margin-top: 0; }
-
-input, textarea, select {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  box-sizing: border-box;
-  font-family: inherit;
-}
-
-textarea { resize: vertical; }
-
-.error {
-  color: #dc2626;
-  margin-top: 1rem;
-}
-
-.form-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-}
-
-.btn-primary, .btn-secondary {
-  padding: 0.5rem 1.25rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.btn-primary  { background: #2563eb; color: #fff; }
-.btn-secondary { background: #e5e7eb; color: #111827; }
-</style>
