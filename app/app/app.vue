@@ -3,6 +3,8 @@
     <NuxtRouteAnnouncer />
     <nav>
       <NuxtLink to="/users">Users</NuxtLink>
+      <NuxtLink to="/categories">Categories</NuxtLink>
+      <NuxtLink to="/todos">Todos</NuxtLink>
     </nav>
     <main>
       <NuxtPage />
