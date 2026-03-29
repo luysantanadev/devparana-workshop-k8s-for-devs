@@ -29,6 +29,27 @@ const links = [[{
     open.value = false
   }
 }, {
+  label: 'Users',
+  icon: 'i-lucide-user-round',
+  to: '/users',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Categories',
+  icon: 'i-lucide-tag',
+  to: '/categories',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Todos',
+  icon: 'i-lucide-check-square-2',
+  to: '/todos',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Settings',
   to: '/settings',
   icon: 'i-lucide-settings',
