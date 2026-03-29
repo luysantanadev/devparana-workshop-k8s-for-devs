@@ -1,3 +1,5 @@
-export default defineEventHandler(() => {
-  return [...usersDb].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+
+export default defineEventHandler(async () => {
+  return prisma.user.findMany({ orderBy: { createdAt: 'desc' } })
 })

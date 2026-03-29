@@ -1,16 +1,15 @@
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') ?? '')
 
   if (isNaN(id)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid id' })
   }
 
-  const index = categoriesDb.findIndex(c => c.id === id)
-
-  if (index === -1) {
+  try {
+    await prisma.category.delete({ where: { id } })
+  } catch {
     throw createError({ statusCode: 404, statusMessage: 'Category not found' })
   }
 
-  categoriesDb.splice(index, 1)
   return { success: true }
 })

@@ -1,3 +1,5 @@
+
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
@@ -15,21 +17,17 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'categoryId is required' })
   }
 
-  const todo: DbTodo = {
-    id: nextId('todos'),
-    name: body.name.trim(),
-    description: body.description?.trim() || null,
-    finishedAt: body.finishedAt ? new Date(body.finishedAt).toISOString() : null,
-    userId,
-    categoryId,
-    createdAt: new Date().toISOString(),
-  }
-
-  todosDb.push(todo)
-
-  return {
-    ...todo,
-    user: usersDb.find(u => u.id === userId) ?? { id: userId, name: 'Unknown' },
-    category: categoriesDb.find(c => c.id === categoryId) ?? { id: categoryId, name: 'Unknown' },
-  }
+  return prisma.todo.create({
+    data: {
+      name: body.name.trim(),
+      description: body.description?.trim() || null,
+      finishedAt: body.finishedAt ? new Date(body.finishedAt) : null,
+      userId,
+      categoryId,
+    },
+    include: {
+      user: { select: { id: true, name: true } },
+      category: { select: { id: true, name: true } },
+    },
+  })
 })

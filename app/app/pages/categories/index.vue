@@ -51,11 +51,13 @@ const columns: TableColumn<Category>[] = [
       </UDashboardNavbar>
     </template>
 
-    <UTable
-      :data="categories ?? []"
-      :columns="columns"
-      :loading="status === 'pending'"
-      class="flex-1"
-    />
+    <template #body>
+      <UTable
+        :data="categories ?? []"
+        :columns="columns"
+        :loading="status === 'pending'"
+        class="flex-1"
+      />
+    </template>
   </UDashboardPanel>
 </template>

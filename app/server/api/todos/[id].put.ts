@@ -1,3 +1,5 @@
+
+
 export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') ?? '')
 
@@ -21,25 +23,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'categoryId is required' })
   }
 
-  const index = todosDb.findIndex(t => t.id === id)
-
-  if (index === -1) {
+  try {
+    return await prisma.todo.update({
+      where: { id },
+      data: {
+        name: body.name.trim(),
+        description: body.description?.trim() || null,
+        finishedAt: body.finishedAt ? new Date(body.finishedAt) : null,
+        userId,
+        categoryId,
+      },
+      include: {
+        user: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true } },
+      },
+    })
+  } catch {
     throw createError({ statusCode: 404, statusMessage: 'Todo not found' })
-  }
-
-  todosDb[index] = {
-    ...todosDb[index]!,
-    name: body.name.trim(),
-    description: body.description?.trim() || null,
-    finishedAt: body.finishedAt ? new Date(body.finishedAt).toISOString() : null,
-    userId,
-    categoryId,
-  }
-
-  const todo = todosDb[index]!
-  return {
-    ...todo,
-    user: usersDb.find(u => u.id === userId) ?? { id: userId, name: 'Unknown' },
-    category: categoriesDb.find(c => c.id === categoryId) ?? { id: categoryId, name: 'Unknown' },
   }
 })

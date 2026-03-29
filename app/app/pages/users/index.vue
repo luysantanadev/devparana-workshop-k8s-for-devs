@@ -71,12 +71,13 @@ const columns: TableColumn<User>[] = [
         </template>
       </UDashboardNavbar>
     </template>
-
-    <UTable
-      :data="users ?? []"
+    <template #body>
+      <UTable
+        :data="users ?? []"
       :columns="columns"
       :loading="status === 'pending'"
       class="flex-1"
     />
+    </template>
   </UDashboardPanel>
 </template>

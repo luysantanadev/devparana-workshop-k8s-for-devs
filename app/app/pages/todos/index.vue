@@ -98,11 +98,13 @@ const columns: TableColumn<Todo>[] = [
       </UDashboardNavbar>
     </template>
 
-    <UTable
-      :data="todos ?? []"
-      :columns="columns"
-      :loading="status === 'pending'"
-      class="flex-1"
-    />
+    <template #body>
+      <UTable
+        :data="todos ?? []"
+        :columns="columns"
+        :loading="status === 'pending'"
+        class="flex-1"
+      />
+    </template>
   </UDashboardPanel>
 </template>

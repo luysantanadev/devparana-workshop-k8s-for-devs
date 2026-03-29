@@ -32,25 +32,27 @@ async function submit() {
       </UDashboardNavbar>
     </template>
 
-    <div class="p-6 max-w-md">
-      <form class="space-y-5" @submit.prevent="submit">
-        <UFormField label="Name" required>
-          <UInput v-model="name" placeholder="Enter a category name" class="w-full" required />
-        </UFormField>
+    <template #body>
+      <div class="p-6 max-w-md">
+        <form class="space-y-5" @submit.prevent="submit">
+          <UFormField label="Name" required>
+            <UInput v-model="name" placeholder="Enter a category name" class="w-full" required />
+          </UFormField>
 
-        <UAlert
-          v-if="errorMsg"
-          color="error"
-          variant="soft"
-          :title="errorMsg"
-          icon="i-lucide-circle-x"
-        />
+          <UAlert
+            v-if="errorMsg"
+            color="error"
+            variant="soft"
+            :title="errorMsg"
+            icon="i-lucide-circle-x"
+          />
 
-        <div class="flex gap-3">
-          <UButton color="neutral" variant="outline" to="/categories">Cancel</UButton>
-          <UButton type="submit" icon="i-lucide-plus">Create</UButton>
-        </div>
-      </form>
-    </div>
+          <div class="flex gap-3">
+            <UButton color="neutral" variant="outline" to="/categories">Cancel</UButton>
+            <UButton type="submit" icon="i-lucide-plus">Create</UButton>
+          </div>
+        </form>
+      </div>
+    </template>
   </UDashboardPanel>
 </template>

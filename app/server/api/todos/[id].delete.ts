@@ -1,16 +1,14 @@
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') ?? '')
 
   if (isNaN(id)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid id' })
   }
 
-  const index = todosDb.findIndex(t => t.id === id)
-
-  if (index === -1) {
+  try {
+    await prisma.todo.delete({ where: { id } })
+    return { success: true }
+  } catch {
     throw createError({ statusCode: 404, statusMessage: 'Todo not found' })
   }
-
-  todosDb.splice(index, 1)
-  return { success: true }
 })

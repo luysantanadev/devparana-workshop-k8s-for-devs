@@ -61,55 +61,57 @@ async function submit() {
       </UDashboardNavbar>
     </template>
 
-    <div class="p-6 max-w-xl">
-      <form class="space-y-5" @submit.prevent="submit">
-        <UFormField label="Name" required>
-          <UInput v-model="form.name" placeholder="Enter a todo name" class="w-full" required />
-        </UFormField>
+    <template #body>
+      <div class="p-6 max-w-xl">
+        <form class="space-y-5" @submit.prevent="submit">
+          <UFormField label="Name" required>
+            <UInput v-model="form.name" placeholder="Enter a todo name" class="w-full" required />
+          </UFormField>
 
-        <UFormField label="Description">
-          <UTextarea v-model="form.description" placeholder="Optional description" :rows="3" class="w-full" />
-        </UFormField>
+          <UFormField label="Description">
+            <UTextarea v-model="form.description" placeholder="Optional description" :rows="3" class="w-full" />
+          </UFormField>
 
-        <UFormField label="Assigned to" required>
-          <USelect
-            v-model="form.userId"
-            :items="userOptions"
-            value-key="value"
-            label-key="label"
-            placeholder="Select a user"
-            class="w-full"
+          <UFormField label="Assigned to" required>
+            <USelect
+              v-model="form.userId"
+              :items="userOptions"
+              value-key="value"
+              label-key="label"
+              placeholder="Select a user"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField label="Category" required>
+            <USelect
+              v-model="form.categoryId"
+              :items="categoryOptions"
+              value-key="value"
+              label-key="label"
+              placeholder="Select a category"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField label="Finish date">
+            <UInput v-model="form.finishedAt" type="datetime-local" class="w-full" />
+          </UFormField>
+
+          <UAlert
+            v-if="errorMsg"
+            color="error"
+            variant="soft"
+            :title="errorMsg"
+            icon="i-lucide-circle-x"
           />
-        </UFormField>
 
-        <UFormField label="Category" required>
-          <USelect
-            v-model="form.categoryId"
-            :items="categoryOptions"
-            value-key="value"
-            label-key="label"
-            placeholder="Select a category"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="Finish date">
-          <UInput v-model="form.finishedAt" type="datetime-local" class="w-full" />
-        </UFormField>
-
-        <UAlert
-          v-if="errorMsg"
-          color="error"
-          variant="soft"
-          :title="errorMsg"
-          icon="i-lucide-circle-x"
-        />
-
-        <div class="flex gap-3">
-          <UButton color="neutral" variant="outline" to="/todos">Cancel</UButton>
-          <UButton type="submit" icon="i-lucide-save">Save</UButton>
-        </div>
-      </form>
-    </div>
+          <div class="flex gap-3">
+            <UButton color="neutral" variant="outline" to="/todos">Cancel</UButton>
+            <UButton type="submit" icon="i-lucide-save">Save</UButton>
+          </div>
+        </form>
+      </div>
+    </template>
   </UDashboardPanel>
 </template>

@@ -12,16 +12,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const name = body.name.trim()
-  const index = categoriesDb.findIndex(c => c.id === id)
 
-  if (index === -1) {
+  try {
+    return await prisma.category.update({ where: { id }, data: { name } })
+  } catch {
     throw createError({ statusCode: 404, statusMessage: 'Category not found' })
   }
-
-  if (categoriesDb.some(c => c.id !== id && c.name.toLowerCase() === name.toLowerCase())) {
-    throw createError({ statusCode: 409, statusMessage: 'A category with that name already exists' })
-  }
-
-  categoriesDb[index]!.name = name
-  return categoriesDb[index]
 })

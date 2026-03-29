@@ -7,11 +7,9 @@ export default defineEventHandler(async (event) => {
 
   const name = body.name.trim()
 
-  if (categoriesDb.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+  try {
+    return await prisma.category.create({ data: { name } })
+  } catch {
     throw createError({ statusCode: 409, statusMessage: 'A category with that name already exists' })
   }
-
-  const category: DbCategory = { id: nextId('categories'), name }
-  categoriesDb.push(category)
-  return category
 })
