@@ -23,5 +23,4 @@ logs
 .env.*
 !.env.example
 
-# VSC
-.history
+/app/generated/prisma
