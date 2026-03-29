@@ -160,35 +160,3 @@ tolerations: []
 
 affinity: {}
 
-# -- CloudNativePG Cluster dependency
-# Requires the CNPG operator installed cluster-wide (see scripts/03.setup-k3d-multi-node.ps1)
-# Full values reference: https://github.com/cloudnative-pg/charts/tree/main/charts/cluster
-cnpg:
-  enabled: true
-
-cluster:
-  instances: 3
-
-  storage:
-    size: 1Gi
-
-  # PostgreSQL major version — maps to ghcr.io/cloudnative-pg/postgresql:<version>
-  postgresql:
-    parameters:
-      max_connections: "200"
-
-  # Credentials for the application user and database
-  initdb:
-    database: app
-    owner: app
-    secret:
-      name: app-db-credentials   # create this Secret before installing, or use managed credentials below
-
-  # Alternatively, let CNPG manage a random password (no pre-created secret needed):
-  # managed:
-  #   roles:
-  #     - name: app
-  #       ensure: present
-  #       login: true
-  #       passwordSecret:
-  #         enabled: true
