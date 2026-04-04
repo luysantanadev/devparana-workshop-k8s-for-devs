@@ -12,7 +12,7 @@
 #   - /var/cache/nginx, /var/log/nginx e /tmp ja tem permissoes corretas
 # Isso elimina a necessidade de RUN chown e USER no Dockerfile.
 # ------------------------------------------------------------------------------
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.29-alpine3.23-perl
 
 # ------------------------------------------------------------------------------
 # Layer 2 - Configuracao do nginx
