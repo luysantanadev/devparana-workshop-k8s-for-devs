@@ -8,14 +8,30 @@
     - Instalada com update disponível → atualiza.
     - Já na versão mais recente       → prossegue sem alteração.
 
+    Por padrão o Docker Desktop NÃO é instalado. Use -InstallDocker para incluí-lo.
     Docker Desktop é o único que requer privilégio de sistema: o UAC é solicitado
     apenas para essa etapa. k3d, kubectl e Helm são instalados no escopo do usuário,
     sem necessidade de Administrador.
+
+.PARAMETER InstallDocker
+    Quando presente, instala ou atualiza o Docker Desktop.
+    Omita este parâmetro em VMs ou ambientes onde o Docker já está disponível.
+
+.EXAMPLE
+    .\01.install-dependencies.ps1
+    Instala apenas k3d, kubectl e Helm.
+
+.EXAMPLE
+    .\01.install-dependencies.ps1 -InstallDocker
+    Instala k3d, kubectl, Helm e Docker Desktop.
 
 .NOTES
     Pré-requisito: winget (App Installer) disponível no PATH.
     Após a execução, feche o terminal para que as variáveis de PATH sejam aplicadas.
 #>
+param(
+    [switch]$InstallDocker
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -128,9 +144,14 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ---------------------------------------------------------------------------
-# 1. Docker Desktop — único que requer elevação (UAC solicitado sob demanda)
+# 1. Docker Desktop — opcional, requer elevação (UAC solicitado sob demanda)
 # ---------------------------------------------------------------------------
-Install-DockerDesktop
+if ($InstallDocker) {
+    Install-DockerDesktop
+} else {
+    Write-Step "Docker Desktop"
+    Write-Warn "Pulando instalacao do Docker Desktop (use -InstallDocker para incluir)."
+}
 
 # ---------------------------------------------------------------------------
 # 2. CLIs — instalados no escopo do usuário, sem elevação necessária
