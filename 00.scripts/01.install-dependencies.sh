@@ -100,7 +100,31 @@ install_docker_desktop() {
 
   write_step "Instalando dependências do Docker Desktop..."
   apt-get update -qq >/dev/null
-  apt-get install -y ca-certificates curl gnupg pass >/dev/null
+  apt-get install -y ca-certificates curl gnupg pass qemu-kvm >/dev/null
+
+  # Docker Desktop exige acesso ao dispositivo KVM para virtualização
+  # Ref: https://docs.docker.com/desktop/install/linux-install/#kvm-virtualization-support
+  if ! grep -q "^kvm" /etc/group 2>/dev/null; then
+    write_warn "Grupo 'kvm' não encontrado. Criando..."
+    groupadd kvm
+  fi
+
+  local TARGET_USER="${SUDO_USER:-$USER}"
+  if ! id -nG "$TARGET_USER" 2>/dev/null | grep -qw kvm; then
+    usermod -aG kvm "$TARGET_USER"
+    write_warn "Usuário '$TARGET_USER' adicionado ao grupo kvm. Faça logout/login para aplicar."
+  else
+    write_success "Usuário '$TARGET_USER' já pertence ao grupo kvm."
+  fi
+
+  # Garante que o dispositivo /dev/kvm pertence ao grupo kvm
+  if [[ -e /dev/kvm ]]; then
+    chown root:kvm /dev/kvm
+    chmod 660 /dev/kvm
+    write_success "Permissões de /dev/kvm configuradas (root:kvm 660)."
+  else
+    write_warn "/dev/kvm não encontrado. Verifique se a virtualização está habilitada na BIOS/UEFI."
+  fi
 
   write_step "Baixando Docker Desktop (.deb)..."
   local DEB="/tmp/docker-desktop-${ARCH}.deb"
