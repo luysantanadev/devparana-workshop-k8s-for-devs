@@ -1,9 +1,24 @@
-# setup-workshop.ps1
+<#
+.SYNOPSIS
+    Cria o cluster k3d 'workshop' com Traefik e CloudNativePG para o laboratório local de Kubernetes.
+
+.DESCRIPTION
+    - Remove cluster anterior 'workshop' se existir.
+    - Cria cluster k3d multi-node com loadbalancer nas portas 80/443.
+    - Instala Traefik (ingress) e CloudNativePG operator via Helm.
+    - Idempotente: pode ser reexecutado a qualquer momento para resetar o ambiente.
+
+.NOTES
+    Pré-requisito: Docker Desktop em execução, k3d, kubectl e helm no PATH.
+    Execute após 02.verify-installs.ps1 confirmar tudo verde.
+#>
+
 $ErrorActionPreference = "Stop"
 
-function Write-Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
-function Write-Success($msg) { Write-Host "OK: $msg" -ForegroundColor Green }
-function Write-Fail($msg) { Write-Host "ERRO: $msg" -ForegroundColor Red; exit 1 }
+function Write-Step($msg)    { Write-Host "`n==> $msg" -ForegroundColor Cyan }
+function Write-Success($msg) { Write-Host "    OK: $msg" -ForegroundColor Green }
+function Write-Warn($msg)    { Write-Host "    AVISO: $msg" -ForegroundColor Yellow }
+function Write-Fail($msg)    { Write-Host "`n    ERRO: $msg" -ForegroundColor Red; exit 1 }
 
 # ---------------------------------------------------------------------------
 # 0. Pre-checks
@@ -30,8 +45,9 @@ Write-Step "Verificando cluster existente..."
 
 $existing = k3d cluster list -o json | ConvertFrom-Json | Where-Object { $_.name -eq "workshop" }
 if ($existing) {
-    Write-Host "Cluster 'workshop' encontrado. Deletando..." -ForegroundColor Yellow
+    Write-Host "    Cluster 'workshop' encontrado. Deletando..." -ForegroundColor Yellow
     k3d cluster delete workshop
+    if ($LASTEXITCODE -ne 0) { Write-Fail "Falha ao deletar o cluster anterior." }
 }
 
 # ---------------------------------------------------------------------------
@@ -89,7 +105,7 @@ helm repo update | Out-Null
 
 Write-Step "Instalando Traefik..."
 
-helm install traefik traefik/traefik `
+helm upgrade --install traefik traefik/traefik `
     --namespace traefik `
     --create-namespace `
     --set deployment.replicas=1 `
@@ -105,8 +121,6 @@ helm install traefik traefik/traefik `
 if ($LASTEXITCODE -ne 0) { Write-Fail "Falha ao instalar o Traefik." }
 Write-Success "Traefik instalado."
 
-# ---------------------------------------------------------------------------
-# 6. Smoke test
 # ---------------------------------------------------------------------------
 # 6. Instalar CloudNativePG operator
 # ---------------------------------------------------------------------------
@@ -127,6 +141,8 @@ if ($LASTEXITCODE -ne 0) { Write-Fail "Falha ao instalar o CloudNativePG operato
 Write-Success "CloudNativePG operator instalado."
 
 # ---------------------------------------------------------------------------
+# 7. Verificação final do cluster
+# ---------------------------------------------------------------------------
 Write-Step "Verificando cluster..."
 
 kubectl get nodes
@@ -136,9 +152,9 @@ Write-Host ""
 kubectl get pods -n cnpg-system
 
 # ---------------------------------------------------------------------------
-# 7. Resumo final
+# 8. Resumo final
 # ---------------------------------------------------------------------------
-$nodeCount = kubectl get nodes --no-headers | Measure-Object -Line | Select-Object -ExpandProperty Lines
+$nodeCount = @(kubectl get nodes --no-headers).Count
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Green
