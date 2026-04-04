@@ -9,24 +9,29 @@
 #   - k3d, kubectl e Helm → instalam via curl/apt se ausentes.
 #   - Ferramentas já instaladas → prossegue sem alteração.
 #
-#   Por padrão o Docker Engine NÃO é instalado. Use --install-docker para incluí-lo.
+#   Por padrão o Docker Engine NÃO é instalado. Use --install-docker para o Engine
+#   (servidor headless) ou --install-docker-desktop para o Docker Desktop com GUI
+#   (recomendado para Ubuntu Desktop).
 #
 # USAGE
-#   ./01.install-dependencies.sh              # instala apenas k3d, kubectl e Helm
-#   ./01.install-dependencies.sh --install-docker
+#   ./01.install-dependencies.sh                       # instala apenas VS Code, k3d, kubectl e Helm
+#   sudo ./01.install-dependencies.sh --install-docker          # + Docker Engine (headless)
+#   sudo ./01.install-dependencies.sh --install-docker-desktop  # + Docker Desktop (GUI)
 #
 # NOTES
-#   Execute com sudo ou como root para instalar Docker Engine.
+#   Execute com sudo para instalar Docker Engine, Docker Desktop ou VS Code.
 #   k3d, kubectl e Helm são instalados no escopo do usuário (~/.local/bin ou /usr/local/bin).
 # ==============================================================================
 
 set -euo pipefail
 
 INSTALL_DOCKER=false
+INSTALL_DOCKER_DESKTOP=false
 
 for arg in "$@"; do
   case "$arg" in
-    --install-docker) INSTALL_DOCKER=true ;;
+    --install-docker)         INSTALL_DOCKER=true ;;
+    --install-docker-desktop) INSTALL_DOCKER_DESKTOP=true ;;
   esac
 done
 
@@ -71,6 +76,48 @@ install_docker() {
 
   systemctl enable --now docker
   write_success "Docker Engine instalado e ativado."
+}
+
+# ---------------------------------------------------------------------------
+# Docker Desktop — GUI para Ubuntu Desktop (https://docs.docker.com/desktop/linux/)
+# ---------------------------------------------------------------------------
+install_docker_desktop() {
+  write_step "Docker Desktop (GUI)"
+
+  if command_exists docker && docker context ls 2>/dev/null | grep -q desktop-linux; then
+    write_success "Docker Desktop já está instalado. Pulando."
+    return
+  fi
+
+  if [[ $EUID -ne 0 ]]; then
+    write_fail "A instalação do Docker Desktop requer sudo. Execute: sudo $0 --install-docker-desktop"
+  fi
+
+  local ARCH
+  ARCH=$(uname -m)
+  [[ "$ARCH" == "x86_64" ]]  && ARCH="amd64"
+  [[ "$ARCH" == "aarch64" ]] && ARCH="arm64"
+
+  write_step "Instalando dependências do Docker Desktop..."
+  apt-get update -qq >/dev/null
+  apt-get install -y ca-certificates curl gnupg pass >/dev/null
+
+  write_step "Baixando Docker Desktop (.deb)..."
+  local DEB="/tmp/docker-desktop-${ARCH}.deb"
+  curl -fsSLo "$DEB" \
+    "https://desktop.docker.com/linux/main/${ARCH}/docker-desktop-${ARCH}.deb"
+
+  write_step "Instalando pacote Docker Desktop..."
+  apt-get install -y "$DEB" >/dev/null
+  rm -f "$DEB"
+
+  # Adiciona o usuário que invocou sudo ao grupo docker
+  if [[ -n "${SUDO_USER:-}" ]]; then
+    usermod -aG docker "$SUDO_USER"
+    write_warn "Usuário '$SUDO_USER' adicionado ao grupo docker. Faça logout/login para aplicar."
+  fi
+
+  write_success "Docker Desktop instalado. Abra pelo menu de aplicativos ou com: systemctl --user start docker-desktop"
 }
 
 # ---------------------------------------------------------------------------
@@ -127,7 +174,7 @@ install_vscode() {
   fi
 
   if [[ $EUID -ne 0 ]]; then
-    write_fail "A instalação do VS Code requer sudo. Execute: sudo $0 --install-docker (ou rode o script inteiro com sudo)"
+    write_fail "A instalação do VS Code requer sudo. Execute: sudo $0"
   fi
 
   write_step "Instalando VS Code via repositório Microsoft..."
@@ -171,11 +218,13 @@ if ! command_exists curl; then
 fi
 write_success "curl disponível."
 
-if $INSTALL_DOCKER; then
+if $INSTALL_DOCKER_DESKTOP; then
+  install_docker_desktop
+elif $INSTALL_DOCKER; then
   install_docker
 else
-  write_step "Docker Engine"
-  write_warn "Pulando instalação do Docker (use --install-docker para incluir)."
+  write_step "Docker"
+  write_warn "Pulando instalação do Docker (use --install-docker para Engine ou --install-docker-desktop para GUI)."
 fi
 
 install_vscode
@@ -190,6 +239,8 @@ echo -e "${GREEN}============================================================${R
 echo ""
 echo -e "${YELLOW}PRÓXIMOS PASSOS:${RESET}"
 echo -e "${YELLOW}  1. Recarregue o terminal: source ~/.bashrc${RESET}"
-echo -e "${YELLOW}  2. Certifique-se que o daemon Docker está rodando: sudo systemctl status docker${RESET}"
+echo -e "${YELLOW}  2. Inicie o Docker:${RESET}"
+echo -e "${YELLOW}     Docker Engine   : sudo systemctl start docker${RESET}"
+echo -e "${YELLOW}     Docker Desktop  : systemctl --user start docker-desktop${RESET}"
 echo -e "${YELLOW}  3. Execute: ./02.verify-installs.sh${RESET}"
 echo ""
