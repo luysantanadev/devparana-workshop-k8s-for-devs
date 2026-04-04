@@ -116,6 +116,37 @@ install_kubectl() {
 }
 
 # ---------------------------------------------------------------------------
+# Visual Studio Code — instala via repositório oficial da Microsoft
+# ---------------------------------------------------------------------------
+install_vscode() {
+  write_step "Visual Studio Code"
+
+  if command_exists code; then
+    write_success "VS Code já instalado ($(code --version 2>&1 | head -1)). Pulando."
+    return
+  fi
+
+  if [[ $EUID -ne 0 ]]; then
+    write_fail "A instalação do VS Code requer sudo. Execute: sudo $0 --install-docker (ou rode o script inteiro com sudo)"
+  fi
+
+  write_step "Instalando VS Code via repositório Microsoft..."
+
+  # Instala dependências mínimas e importa a chave GPG oficial
+  apt-get install -y apt-transport-https gnupg2 >/dev/null
+  curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+    | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+
+  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] \
+https://packages.microsoft.com/repos/code stable main" \
+    > /etc/apt/sources.list.d/vscode.list
+
+  apt-get update -qq >/dev/null
+  apt-get install -y code >/dev/null
+  write_success "VS Code instalado."
+}
+
+# ---------------------------------------------------------------------------
 # Helm — instala via script oficial (https://helm.sh)
 # ---------------------------------------------------------------------------
 install_helm() {
@@ -147,6 +178,7 @@ else
   write_warn "Pulando instalação do Docker (use --install-docker para incluir)."
 fi
 
+install_vscode
 install_k3d
 install_kubectl
 install_helm
