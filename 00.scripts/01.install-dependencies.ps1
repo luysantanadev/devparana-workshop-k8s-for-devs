@@ -69,7 +69,7 @@ function Install-DockerDesktop {
     Write-Step "Docker Desktop (instalacao de sistema — requer UAC)"
 
     # Se já estiver instalado (por qualquer meio), não toca — evita UAC desnecessário.
-    winget list --id Docker.DockerDesktop --exact --accept-source-agreements 2>&1 | Out-Null
+    winget list --id Docker.DockerDesktop --exact --accept-source-agreements --disable-interactivity 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Docker Desktop ja esta instalado. Pulando."
         return
@@ -120,7 +120,7 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     Write-Fail "winget nao encontrado.`n  Solucao: instale o 'App Installer' pela Microsoft Store ou atualize o Windows 10/11."
 }
 
-winget source update 2>&1 | Out-Null
+winget source update --disable-interactivity 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Warn "Nao foi possivel atualizar as fontes do winget. Prosseguindo com cache local."
 } else {
