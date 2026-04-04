@@ -5,6 +5,9 @@
 .DESCRIPTION
     - Remove cluster anterior 'workshop' se existir.
     - Cria cluster k3d multi-node com loadbalancer nas portas 80/443.
+    - Cria o registry local junto com o cluster (--registry-create), conforme
+      o padrao da documentacao k3d. O k3d configura automaticamente o
+      registries.yaml em todos os nos — nenhum passo manual necessario.
     - Instala Traefik (ingress) e CloudNativePG operator via Helm.
     - Idempotente: pode ser reexecutado a qualquer momento para resetar o ambiente.
 
@@ -60,6 +63,7 @@ k3d cluster create workshop `
     --port "443:443@loadbalancer" `
     --agents 2 `
     --k3s-arg "--disable=traefik@server:0" `
+    --registry-create workshop-registry.localhost:0.0.0.0:5001 `
     --kubeconfig-update-default `
     --kubeconfig-switch-context `
     --wait
@@ -166,6 +170,11 @@ Write-Host "API Server:   $newServer"
 Write-Host "Traefik:      http://localhost  (porta 80)"
 Write-Host "              https://localhost (porta 443)"
 Write-Host "CloudNativePG: instalado em cnpg-system"
+Write-Host ""
+Write-Host "Registry local:"
+Write-Host "  Push do host    : localhost:5001"
+Write-Host "  Dentro dos pods : k3d-workshop-registry.localhost:5001"
+Write-Host "  Sem autenticacao. Sem alteracao no daemon.json."
 Write-Host ""
 Write-Host "Proximo passo:"
 Write-Host "  kubectl apply -f scripts/teste.yaml"
