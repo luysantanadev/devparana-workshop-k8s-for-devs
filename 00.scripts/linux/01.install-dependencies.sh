@@ -104,6 +104,8 @@ install_docker_desktop() {
 
   # Docker Desktop exige acesso ao dispositivo KVM para virtualização
   # Ref: https://docs.docker.com/desktop/install/linux-install/#kvm-virtualization-support
+  write_step "Configurando acesso ao KVM..."
+
   if ! grep -q "^kvm" /etc/group 2>/dev/null; then
     write_warn "Grupo 'kvm' não encontrado. Criando..."
     groupadd kvm
@@ -112,19 +114,27 @@ install_docker_desktop() {
   local TARGET_USER="${SUDO_USER:-$USER}"
   if ! id -nG "$TARGET_USER" 2>/dev/null | grep -qw kvm; then
     usermod -aG kvm "$TARGET_USER"
-    write_warn "Usuário '$TARGET_USER' adicionado ao grupo kvm. Faça logout/login para aplicar."
+    write_success "Usuário '$TARGET_USER' adicionado ao grupo kvm."
   else
     write_success "Usuário '$TARGET_USER' já pertence ao grupo kvm."
   fi
 
-  # Garante que o dispositivo /dev/kvm pertence ao grupo kvm
-  if [[ -e /dev/kvm ]]; then
-    chown root:kvm /dev/kvm
-    chmod 660 /dev/kvm
-    write_success "Permissões de /dev/kvm configuradas (root:kvm 660)."
-  else
-    write_warn "/dev/kvm não encontrado. Verifique se a virtualização está habilitada na BIOS/UEFI."
+  # Regra udev persistente: garante que /dev/kvm sempre terá as permissões corretas
+  # após cada boot, sem necessidade de ajuste manual
+  local UDEV_RULE="/etc/udev/rules.d/99-kvm.rules"
+  echo 'KERNEL=="kvm", GROUP="kvm", MODE="0660", OPTIONS+="static_node=kvm"' > "$UDEV_RULE"
+  udevadm control --reload-rules
+  udevadm trigger --name-match=kvm
+  write_success "Regra udev criada em $UDEV_RULE (permissões aplicadas imediatamente e persistem no boot)."
+
+  if [[ ! -e /dev/kvm ]]; then
+    write_warn "/dev/kvm não encontrado. Verifique se a virtualização (VT-x/AMD-V) está habilitada na BIOS/UEFI."
   fi
+
+  # O kernel ainda enxerga os grupos antigos até um novo login. Para que o Docker
+  # Desktop funcione SEM logout, forçamos o grupo ativo na sessão do usuário alvo.
+  write_warn "ATENÇÃO: faça logout e login novamente para que o grupo 'kvm' seja reconhecido pela sessão gráfica."
+  write_warn "Alternativa sem logout: abra um terminal e execute 'newgrp kvm', depois inicie o Docker Desktop por lá."
 
   write_step "Baixando Docker Desktop (.deb)..."
   local DEB="/tmp/docker-desktop-${ARCH}.deb"
@@ -229,7 +239,7 @@ install_helm() {
   fi
 
   write_step "Instalando Helm..."
-  curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
   write_success "Helm instalado."
 }
 
