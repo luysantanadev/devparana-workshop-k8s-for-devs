@@ -15,7 +15,7 @@ replicaCount: 2
 # (endereço interno equivalente ao localhost:5001 externo).
 # O k3d configura o registries.yaml em todos os nodes automaticamente na criação.
 image:
-  repository: localhost:5001/nuxt-workshop
+  repository: workshop-registry.localhost:5001/nuxt-workshop
   # Always: força pull a cada reinicialização — útil durante o desenvolvimento iterativo.
   # IfNotPresent: usa cache local do node — use em produção com tags fixas.
   pullPolicy: Always

@@ -94,7 +94,7 @@ spec:
         runAsUser: 1000   # corresponde ao usuário "node" da imagem node:alpine
       containers:
         - name: nuxt-workshop
-          image: localhost:5001/nuxt-workshop:1.0.0
+          image: workshop-registry.localhost:5001/nuxt-workshop:1.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -178,11 +178,11 @@ metadata:
   labels:
     app: nuxt-workshop
     version: "1.0.0"
-  annotations:
-    # Traefik é o Ingress Controller padrão do k3d
-    # Para NGINX, substitua por: kubernetes.io/ingress.class: "nginx"
-    kubernetes.io/ingress.class: "traefik"
 spec:
+  # ingressClassName substitui a annotation kubernetes.io/ingress.class (deprecated desde k8s 1.18)
+  # "traefik" é o Ingress Controller padrão do k3d
+  # Para NGINX, substitua por: ingressClassName: "nginx"
+  ingressClassName: traefik
   rules:
     - host: nuxt-workshop.local
       http:

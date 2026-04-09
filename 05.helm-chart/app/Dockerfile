@@ -10,8 +10,12 @@ RUN corepack enable
 # Copy manifests first for better layer caching
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 
-# Install all dependencies (including devDeps needed for the build)
-RUN pnpm install --frozen-lockfile
+# --shamefully-hoist: faz pnpm comportar-se como npm — hoist todas as dependências
+# para node_modules/ raiz, tornando @nuxt/cli (dep transitiva de nuxt) acessível
+# durante o build. Sem isso, nuxt/bin/nuxt.mjs não localiza @nuxt/cli no strict mode.
+# A app usa @prisma/adapter-pg (driver JS puro) — não precisa de binários nativos,
+# portanto os postinstall scripts do @prisma/engines são dispensáveis aqui.
+RUN pnpm install --frozen-lockfile --shamefully-hoist
 
 # Copy source
 COPY . .

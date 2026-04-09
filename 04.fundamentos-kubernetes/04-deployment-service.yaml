@@ -45,7 +45,7 @@ spec:
     spec:
       containers:
         - name: nuxt-workshop
-          image: localhost:5001/nuxt-workshop:1.0.0
+          image: workshop-registry.localhost:5001/nuxt-workshop:1.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000

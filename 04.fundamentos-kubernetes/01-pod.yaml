@@ -29,7 +29,7 @@ spec:
       # Imagem construída no lab e importada no cluster k3d:
       #   docker build -t nuxt-workshop:1.0.0 .
       #   k3d image import nuxt-workshop:1.0.0 -c workshop
-      image: localhost:5001/nuxt-workshop:1.0.0
+      image: workshop-registry.localhost:5001/nuxt-workshop:1.0.0
       # IfNotPresent: usa a imagem local se já estiver no node — não faz pull externo
       imagePullPolicy: IfNotPresent
       ports:
