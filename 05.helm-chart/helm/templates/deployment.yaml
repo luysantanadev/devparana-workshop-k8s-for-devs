@@ -42,8 +42,23 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.port }}
+              containerPort: {{ .Values.containerPort }}
               protocol: TCP
+          {{- if or .Values.configMap.enabled .Values.secret.enabled }}
+          envFrom:
+            {{- if .Values.configMap.enabled }}
+            - configMapRef:
+                name: {{ include "helm.fullname" . }}
+            {{- end }}
+            {{- if .Values.secret.enabled }}
+            - secretRef:
+                name: {{ include "helm.fullname" . }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

@@ -20,6 +20,21 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2024-07-11',
 
+  nitro: {
+    externals: {
+      // Keep @opentelemetry/api as an external so server routes that call
+      // trace.getTracer() share the same global singleton registered by
+      // instrumentation.mjs (loaded via node --import before the server boots).
+      external: ['@opentelemetry/api']
+    }
+  },
+
+  hooks: {
+    'nitro:config'(nitroConfig) {
+    nitroConfig.rollupConfig = nitroConfig.rollupConfig || {}
+    }
+  },
+
   eslint: {
     config: {
       stylistic: {
