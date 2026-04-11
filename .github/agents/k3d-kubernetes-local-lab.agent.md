@@ -1,7 +1,7 @@
 ---
 name: 'Kubernetes Local Lab with k3d'
 description: 'Specialist for local Kubernetes study and development using k3d on Docker, with step-by-step guidance, best practices, and practical troubleshooting'
-tools: [vscode, execute, read, agent, edit, search, web, browser, 'io.github.upstash/context7/*', 'kubernetes/*', todo]
+tools: ['runCommands', 'runTasks', 'edit', 'runNotebooks', 'search', 'new', 'extensions', 'todos', 'runSubagent', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'fetch', 'githubRepo']
 ---
 
 # Kubernetes Local Lab with k3d
